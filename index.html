@@ -1,64 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sadzzad Chatbot</title>
   <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.0.4/dist/transformers.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; max-width: 600px; }
-    #chatbox { border: 1px solid #ddd; height: 300px; padding: 10px; overflow-y: scroll; }
-    .message { margin: 8px 0; }
-    .user { color: #0366d6; }
-    .bot { color: #22863a; }
-    input, button { font-size: 1rem; padding: 8px; margin-top: 10px; }
+    body { font-family: Arial, sans-serif; margin: 30px auto; max-width: 650px; }
+    h2 { text-align: center; }
+    #chatbox {
+      border: 1px solid #ccc; padding: 15px;
+      height: 400px; overflow-y: auto; margin-bottom: 10px;
+      background: #fafafa; border-radius: 8px;
+    }
+    .message { margin: 10px 0; }
+    .user { color: #007bff; }
+    .bot { color: #28a745; }
+    input, button {
+      font-size: 1rem; padding: 10px;
+      border: 1px solid #ccc; border-radius: 5px;
+    }
+    input { width: 75%; }
+    button { width: 20%; margin-left: 5%; cursor: pointer; }
   </style>
 </head>
 <body>
-  <h2>Sadzzad Chatbot</h2>
-  <div id="chatbox"></div>
-  <input id="user-input" placeholder="Ask me anything…" style="width: 80%;">
+  <h2>💬 Sadzzad ONNX Chatbot</h2>
+  <div id="chatbox">
+    <div class="message bot">BOT: 🤖 Chatbot loading...</div>
+  </div>
+  <input id="user-input" placeholder="Type your message here..." />
   <button onclick="sendMessage()">Send</button>
 
   <script>
     let generator;
 
+    // Wait until page loads to initialize the model
     window.onload = async function () {
       try {
-        // Wait for Transformers.js to be ready
         generator = await window.transformers.pipeline('text-generation', {
-          model: 'sadzzadisking/chatbot_1233',
-          modelFormat: 'onnx',
-          tokenizer: 'sadzzadisking/chatbot_1233',
+          model: 'https://huggingface.co/sadzzadisking/chatbot_1233/resolve/main/model.onnx',
+          tokenizer: 'https://huggingface.co/sadzzadisking/chatbot_1233/resolve/main/tokenizer.json',
+          modelFormat: 'onnx'
         });
-        appendMessage('bot', '🤖 Chatbot is ready!');
+        appendMessage('bot', '✅ Chatbot is ready! Ask me anything.');
       } catch (err) {
-        console.error("Model load error:", err);
-        appendMessage('bot', '❌ Failed to load model.');
+        console.error("Load failed:", err);
+        appendMessage('bot', '❌ Failed to load ONNX model. Check console.');
       }
     };
 
     function appendMessage(sender, text) {
-      const e = document.createElement('div');
-      e.className = `message ${sender}`;
-      e.textContent = `${sender.toUpperCase()}: ${text}`;
-      document.getElementById('chatbox').appendChild(e);
-      document.getElementById('chatbox').scrollTop = 1e9;
+      const chatbox = document.getElementById("chatbox");
+      const msg = document.createElement("div");
+      msg.className = `message ${sender}`;
+      msg.textContent = `${sender.toUpperCase()}: ${text}`;
+      chatbox.appendChild(msg);
+      chatbox.scrollTop = chatbox.scrollHeight;
     }
 
     async function sendMessage() {
-      const input = document.getElementById('user-input').value.trim();
-      if (!input || !generator) return;
-      appendMessage('user', input);
-      document.getElementById('user-input').value = '';
+      const inputField = document.getElementById("user-input");
+      const userText = inputField.value.trim();
+      if (!userText || !generator) return;
+
+      appendMessage("user", userText);
+      inputField.value = "";
 
       try {
-        const out = await generator(input, {
-          max_new_tokens: 50,
+        const response = await generator(userText, {
+          max_new_tokens: 60,
           return_full_text: false
         });
-        appendMessage('bot', out[0].generated_text);
-      } catch (e) {
-        console.error(e);
-        appendMessage('bot', '❗️ Error generating response.');
+        appendMessage("bot", response[0].generated_text.trim());
+      } catch (err) {
+        console.error(err);
+        appendMessage("bot", "⚠️ Error generating response.");
       }
     }
   </script>
